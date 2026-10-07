@@ -1,0 +1,727 @@
+<title>The Lemonade Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Caveat:wght@600;700&display=swap">
+<style>
+/* Layout: a market street. A striped awning up top, then a single column of "stalls" (lessons) that get more hands-on as you go. */
+:root {
+  --bg: #edf3f1;
+  --surface: #ffffff;
+  --surface-2: #e2ebe8;
+  --ink: #173836;
+  --muted: #587472;
+  --line: #c9d8d4;
+  --lemon: #f6c625;
+  --lemon-soft: #fdf1c4;
+  --lemon-ink: #5c4500;
+  --demand: #d4521a;      /* buyers */
+  --demand-soft: #fbe2d6;
+  --supply: #17796f;      /* makers */
+  --supply-soft: #d3ece8;
+  --good: #2f8a3c;
+  --f-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-tag: "Caveat", "Comic Sans MS", cursive;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1d1c; --surface: #16292a; --surface-2: #1d3433; --ink: #e5efed; --muted: #9db6b2; --line: #2c4645;
+    --lemon: #f6c625; --lemon-soft: #3a3214; --lemon-ink: #f8dc7a;
+    --demand: #ff7d47; --demand-soft: #42261b; --supply: #44c0b3; --supply-soft: #173a37; --good: #6fcf7c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1d1c; --surface: #16292a; --surface-2: #1d3433; --ink: #e5efed; --muted: #9db6b2; --line: #2c4645;
+  --lemon: #f6c625; --lemon-soft: #3a3214; --lemon-ink: #f8dc7a;
+  --demand: #ff7d47; --demand-soft: #42261b; --supply: #44c0b3; --supply-soft: #173a37; --good: #6fcf7c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); font-weight: 800; }
+h2 { font-size: clamp(1.7rem, 4.5vw, 2.3rem); font-weight: 800; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+p { margin: 0; max-width: 64ch; }
+.buyers { color: var(--demand); font-weight: 700; }
+.makers { color: var(--supply); font-weight: 700; }
+
+.awning {
+  height: 44px;
+  background: repeating-linear-gradient(90deg, var(--lemon) 0 48px, var(--surface) 48px 96px);
+  position: relative;
+}
+.awning::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -12px; height: 12px;
+  background: radial-gradient(circle at 24px 0, var(--lemon) 0 23px, transparent 24px) 0 0 / 96px 12px repeat-x,
+              radial-gradient(circle at 24px 0, var(--surface) 0 23px, transparent 24px) 48px 0 / 96px 12px repeat-x;
+}
+
+.wrap { max-width: 920px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: flex; flex-direction: column; gap: 72px; }
+section { display: flex; flex-direction: column; gap: 18px; scroll-margin-top: 16px; }
+.eyebrow { font-family: var(--f-body); font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; }
+
+/* Hero */
+.hero { gap: 22px; }
+.hero h1 span { background: linear-gradient(transparent 62%, var(--lemon) 62% 92%, transparent 92%); padding-inline: 4px; }
+.formula {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  font-family: var(--f-display); font-weight: 600; font-size: clamp(1.1rem, 3.4vw, 1.4rem);
+}
+.formula .chip { padding: 6px 14px; border-radius: 999px; }
+.formula .chip.d { background: var(--demand-soft); color: var(--demand); }
+.formula .chip.s { background: var(--supply-soft); color: var(--supply); }
+.formula .chip.p { background: var(--lemon); color: #3b2c00; }
+.formula .op { color: var(--muted); }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; }
+.toc a { color: var(--ink); text-decoration: none; border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .92rem; }
+.toc a:hover, .toc a:focus-visible { border-color: var(--ink); }
+
+/* Panels */
+.panel { background: var(--surface); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 18px; border: 1px solid var(--line); }
+.note { background: var(--surface-2); border-radius: 10px; padding: 12px 16px; font-size: .96rem; }
+
+/* Price tags (cards) */
+.tags { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.tag-card {
+  appearance: none; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+  padding: 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.tag-card:hover { border-color: var(--muted); }
+.tag-card:focus-visible, button:focus-visible, input:focus-visible, .seg label:focus-within { outline: 3px solid var(--lemon); outline-offset: 2px; }
+.tag-card .item { font-family: var(--f-display); font-weight: 600; font-size: 1.2rem; line-height: 1.2; }
+.tag-card .ask { color: var(--muted); font-size: .92rem; }
+.tag-card .answer { display: flex; flex-direction: column; gap: 8px; }
+.price-tag { font-family: var(--f-tag); font-weight: 700; font-size: 1.6rem; color: var(--lemon-ink); background: var(--lemon-soft); align-self: flex-start; padding: 0 12px; border-radius: 6px; line-height: 1.4; }
+.meter { display: grid; grid-template-columns: 7.5em 1fr; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); }
+.meter .bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.meter .bar i { display: block; height: 100%; border-radius: 4px; }
+.meter.d .bar i { background: var(--demand); }
+.meter.s .bar i { background: var(--supply); }
+.tag-card .why { font-size: .95rem; }
+
+/* Sliders */
+.control { display: flex; flex-direction: column; gap: 6px; }
+.control-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.control label { font-weight: 700; }
+.big-price { font-family: var(--f-tag); font-weight: 700; font-size: 2.2rem; line-height: 1; color: var(--lemon-ink); background: var(--lemon-soft); padding: 2px 12px 4px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--lemon); height: 28px; }
+
+/* Crowd + stalls */
+.crowd { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px 4px; }
+.person { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; transition: opacity .25s, color .25s; color: var(--demand); }
+.person svg { width: 100%; max-width: 40px; height: auto; }
+.person .max { font-family: var(--f-tag); font-weight: 700; font-size: 1rem; line-height: 1; color: var(--muted); }
+.person.out { color: var(--line); }
+.person.out .max { text-decoration: line-through; }
+.stalls { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+.stall { border-radius: 10px; padding: 8px 6px; text-align: center; background: var(--surface-2); color: var(--muted); transition: background .25s, color .25s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.stall svg { width: 52px; height: 40px; }
+.stall .cost { font-family: var(--f-tag); font-weight: 700; font-size: 1.15rem; line-height: 1; }
+.stall .state { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.stall.open { background: var(--supply-soft); color: var(--supply); }
+.readout { font-size: 1.1rem; }
+.readout strong { font-variant-numeric: tabular-nums; }
+
+/* Market */
+.market { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 760px) { .market { grid-template-columns: 1fr; } }
+.chart-box { min-width: 0; }
+.chart-box svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .88rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 18px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; background: currentColor; }
+.legend .ld { color: var(--demand); } .legend .ls { color: var(--supply); }
+.side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.seg-group { display: flex; flex-direction: column; gap: 6px; }
+.seg-group .lbl { font-weight: 700; font-size: .95rem; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
+.seg label { cursor: pointer; border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .9rem; user-select: none; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status { border-radius: 10px; padding: 14px 16px; font-size: 1rem; border-left: 6px solid var(--muted); background: var(--surface-2); }
+.status b { font-family: var(--f-display); font-size: 1.15rem; display: block; line-height: 1.2; margin-bottom: 4px; }
+.status.short { border-color: var(--demand); background: var(--demand-soft); }
+.status.surplus { border-color: var(--supply); background: var(--supply-soft); }
+.status.balanced { border-color: var(--lemon); background: var(--lemon-soft); }
+.btn { appearance: none; font: inherit; font-weight: 700; cursor: pointer; border-radius: 999px; padding: 10px 20px; border: 2px solid var(--ink); background: var(--ink); color: var(--bg); align-self: flex-start; }
+.btn.secondary { background: transparent; color: var(--ink); }
+.btn.lemon { background: var(--lemon); border-color: var(--lemon); color: #3b2c00; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.change-note { font-size: .93rem; color: var(--muted); min-height: 1.6em; }
+
+/* Game */
+.game-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.day-name { font-family: var(--f-display); font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+.wallet { text-align: right; }
+.wallet .amt { font-family: var(--f-tag); font-size: 2.2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.wallet .cap { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.forecast { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { border-radius: 999px; padding: 3px 12px; font-size: .88rem; font-weight: 700; background: var(--surface-2); }
+.pill.hot { background: var(--demand-soft); color: var(--demand); }
+.pill.sunny { background: var(--lemon-soft); color: var(--lemon-ink); }
+.pill.rainy, .pill.cloudy { background: var(--supply-soft); color: var(--supply); }
+.game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 640px) { .game-grid { grid-template-columns: 1fr; } }
+.result { display: flex; flex-direction: column; gap: 10px; }
+.result-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.stat { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.stat .n { font-family: var(--f-display); font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat .k { font-size: .8rem; color: var(--muted); }
+.pos { color: var(--good); } .neg { color: var(--demand); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+
+/* Bigger picture */
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.idea { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.idea p { font-size: .97rem; }
+.balance { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .balance { grid-template-columns: 1fr; } }
+.balance > div { border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.balance .good-at { background: var(--supply-soft); }
+.balance .not-good { background: var(--demand-soft); }
+.balance ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; font-size: .97rem; }
+.questions { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 12px; }
+.questions li::marker { font-family: var(--f-display); font-weight: 800; color: var(--muted); }
+.questions .hint { display: block; color: var(--muted); font-size: .92rem; }
+footer { color: var(--muted); font-size: .88rem; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="awning" aria-hidden="true"></div>
+
+<main class="wrap">
+
+  <section class="hero" id="top">
+    <p class="eyebrow">A lemonade stand guide to prices</p>
+    <h1>Why do some things <span>cost more</span> than others?</h1>
+    <p class="lede">Nobody sits in an office deciding what everything should cost. Prices come from two groups of people pulling against each other: the people who want to <span class="buyers">buy</span> something, and the people who <span class="makers">make and sell</span> it.</p>
+    <div class="formula" aria-label="How many people want it, plus how much of it there is, gives the price">
+      <span class="chip d">How many people want it</span>
+      <span class="op">+</span>
+      <span class="chip s">How much of it there is</span>
+      <span class="op">=</span>
+      <span class="chip p">The price</span>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      <a href="#guess">Cheap or pricey?</a>
+      <a href="#buyers">1. Buyers</a>
+      <a href="#makers">2. Makers</a>
+      <a href="#market">3. The market</a>
+      <a href="#stall">4. Run a stall</a>
+      <a href="#bigger">5. The bigger picture</a>
+      <a href="#talk">Things to talk about</a>
+    </nav>
+  </section>
+
+  <section id="guess">
+    <p class="eyebrow">Warm-up</p>
+    <h2>Cheap or pricey?</h2>
+    <p>Have a guess for each one, then tap the card to see why.</p>
+    <div class="tags" id="tags"></div>
+  </section>
+
+  <section id="buyers">
+    <p class="eyebrow">Step 1 · The buyers</p>
+    <h2>Everyone has a “most I'd pay”</h2>
+    <p>Imagine 120 people walking past your lemonade stand. Each of them has a secret price in their head: the most they'd pay for a cup. Some are really thirsty and would pay £3. Some would only buy it if it were really cheap. Each person below stands for 5 people, and the number under them is their “most I'd pay”.</p>
+    <div class="panel">
+      <div class="control">
+        <div class="control-row">
+          <label for="p1">Your price for a cup</label>
+          <span class="big-price" id="p1v">£1.50</span>
+        </div>
+        <input type="range" id="p1" min="0.2" max="3" step="0.05" value="1.5">
+      </div>
+      <div class="crowd" id="crowd" aria-hidden="true"></div>
+      <p class="readout" id="r1" aria-live="polite"></p>
+    </div>
+    <p class="note"><b>The big idea:</b> the higher the price, the fewer people buy. Economists call how much people want something <span class="buyers">demand</span>.</p>
+  </section>
+
+  <section id="makers">
+    <p class="eyebrow">Step 2 · The makers</p>
+    <h2>Making lemonade isn't free</h2>
+    <p>Now look at it from the other side. There are 15 lemonade stalls in town. Lemons, sugar and cups cost money, and some stalls are cheaper to run than others. A stall will only open if the price covers what it costs them to make a cup. Each stall makes 10 cups.</p>
+    <div class="panel">
+      <div class="control">
+        <div class="control-row">
+          <label for="p2">Price people will pay for a cup</label>
+          <span class="big-price" id="p2v">£1.50</span>
+        </div>
+        <input type="range" id="p2" min="0.2" max="3" step="0.05" value="1.5">
+      </div>
+      <div class="stalls" id="stalls" aria-hidden="true"></div>
+      <p class="readout" id="r2" aria-live="polite"></p>
+    </div>
+    <p class="note"><b>The big idea:</b> the higher the price, the more people want to make and sell it. Economists call this <span class="makers">supply</span>.</p>
+  </section>
+
+  <section id="market">
+    <p class="eyebrow">Step 3 · The market</p>
+    <h2>Where buyers and makers meet</h2>
+    <p>Put both groups together and something clever happens. If the price is too high, cups are left over and sellers have to drop their price. If it's too low, there's a queue and sellers realise they can charge more. The price gets pushed towards the spot where the lines cross.</p>
+    <div class="panel">
+      <div class="market">
+        <div class="chart-box">
+          <svg id="chart" viewBox="0 0 420 320" role="img" aria-label="Chart of buyers and makers at each price"></svg>
+          <div class="legend"><span class="ld">Buyers (how many want a cup)</span><span class="ls">Makers (how many cups get made)</span></div>
+        </div>
+        <div class="side">
+          <div class="control">
+            <div class="control-row">
+              <label for="p3">Price</label>
+              <span class="big-price" id="p3v">£2.50</span>
+            </div>
+            <input type="range" id="p3" min="0.2" max="3" step="0.05" value="2.5">
+          </div>
+          <div class="status" id="status" aria-live="polite"></div>
+          <button class="btn lemon" id="settle" type="button">Let the market settle</button>
+        </div>
+      </div>
+      <div class="game-grid">
+        <div class="seg-group">
+          <span class="lbl" id="wlbl">What's the weather doing?</span>
+          <fieldset class="seg" aria-labelledby="wlbl">
+            <label><input type="radio" name="weather" id="w-normal" value="normal" checked>Normal day</label>
+            <label><input type="radio" name="weather" id="w-heat" value="heat">Heatwave</label>
+            <label><input type="radio" name="weather" id="w-rain" value="rain">Rainy</label>
+          </fieldset>
+        </div>
+        <div class="seg-group">
+          <span class="lbl" id="llbl">What's happening with lemons?</span>
+          <fieldset class="seg" aria-labelledby="llbl">
+            <label><input type="radio" name="lemons" id="l-normal" value="normal" checked>Normal</label>
+            <label><input type="radio" name="lemons" id="l-short" value="short">Lemon shortage</label>
+            <label><input type="radio" name="lemons" id="l-more" value="more">New stalls open</label>
+          </fieldset>
+        </div>
+      </div>
+      <p class="change-note" id="change-note">Try a heatwave or a lemon shortage, then press “Let the market settle” to see where the price ends up.</p>
+    </div>
+  </section>
+
+  <section id="stall">
+    <p class="eyebrow">Step 4 · Your turn</p>
+    <h2>Run your own stall for a week</h2>
+    <p>You start with £20. Each morning, check the weather and the price of lemons. Decide how many cups to make and what to charge. Cups you don't sell go warm and get thrown away, so don't make too many. Make too few and you'll miss out on customers.</p>
+    <div class="panel" id="game"></div>
+  </section>
+
+  <section id="bigger">
+    <p class="eyebrow">Step 5 · The bigger picture</p>
+    <h2>What's this got to do with how the country works?</h2>
+    <p>The UK, the USA and most countries are mainly <b>capitalist</b>. That means most shops, farms and factories are owned by people and companies, not by the government. They decide what to make and what to charge. If they guess well, they make a profit. If they guess badly, they lose money, just like your stall.</p>
+    <div class="ideas">
+      <div class="idea">
+        <h3>Prices are messages</h3>
+        <p>When lemonade got expensive in the heatwave, that told makers “make more!” and told buyers “maybe have water today”. Millions of prices send messages like this every day.</p>
+      </div>
+      <div class="idea">
+        <h3>Profit is the reward, loss is the risk</h3>
+        <p>People start businesses hoping to earn more than they spend. That's what pushes them to make things people want. But plenty of businesses lose money and close.</p>
+      </div>
+      <div class="idea">
+        <h3>Competition keeps prices in check</h3>
+        <p>On Sunday a new stall opened and you couldn't charge whatever you liked. When lots of businesses sell the same thing, they have to compete on price and quality.</p>
+      </div>
+      <div class="idea">
+        <h3>Nobody is in charge</h3>
+        <p>No single person knows how to make a pencil from scratch: the wood, the graphite, the paint, the metal bit. Thousands of people around the world each do their part because prices tell them it's worth it.</p>
+      </div>
+    </div>
+    <div class="balance">
+      <div class="good-at">
+        <h3>What markets are good at</h3>
+        <ul>
+          <li>Making lots of different things, cheaply</li>
+          <li>Reacting quickly when people want something new</li>
+          <li>Rewarding new ideas and hard work</li>
+          <li>Letting people choose what to buy</li>
+        </ul>
+      </div>
+      <div class="not-good">
+        <h3>What markets aren't so good at</h3>
+        <ul>
+          <li>Looking after people who can't afford to pay</li>
+          <li>Protecting things nobody owns, like clean air and rivers</li>
+          <li>Things everyone needs but nobody would sell for profit, like street lights or the police</li>
+          <li>Stopping one big company getting too powerful</li>
+        </ul>
+      </div>
+    </div>
+    <p>That's why every country mixes the two. Businesses run most things, and the government uses taxes to pay for schools, hospitals, roads and the police, and makes rules so markets play fair. People argue a lot about exactly how much of each there should be. That's a big part of what politics is about.</p>
+  </section>
+
+  <section id="talk">
+    <p class="eyebrow">For talking about together</p>
+    <h2>Questions to think about</h2>
+    <ol class="questions">
+      <li>Why are holidays more expensive in the school holidays than in term time?
+        <span class="hint">Same hotel, same beach. What's different about how many people want to go?</span></li>
+      <li>If every child suddenly wanted the same toy for Christmas, what would happen to its price? What would the toy company do next year?
+        <span class="hint">Think about the heatwave and what makers do when prices go up.</span></li>
+      <li>Water is far more useful than diamonds. So why are diamonds so much more expensive?
+        <span class="hint">Useful isn't the same as rare. Most of us can get water from a tap.</span></li>
+      <li>Why do top footballers get paid more than nurses, even though nurses do really important work?
+        <span class="hint">How many people can play football at that level? How many people pay to watch? Is that fair? There's no single right answer.</span></li>
+      <li>What are some important things that are free or cheap? Who pays for them?
+        <span class="hint">Libraries, parks, school, seeing a doctor.</span></li>
+    </ol>
+  </section>
+
+  <footer>The numbers on this page are made up to keep things simple. Real markets are messier, but they follow the same pull between buyers and makers.</footer>
+</main>
+
+<script>
+(function () {
+  const fmt = (p) => p < 0.995 ? Math.round(p * 100) + 'p' : '£' + p.toFixed(2);
+  const money = (v) => (v < 0 ? '−£' : '£') + Math.abs(v).toFixed(2);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Warm-up cards ---------- */
+  const tags = [
+    { item: 'A glass of tap water', price: 'Almost free', want: 95, have: 98,
+      why: 'Everyone needs water, but in the UK there is loads of it and it comes straight to your tap. Lots wanted, but lots available, so it is cheap.' },
+    { item: 'A diamond ring', price: 'Hundreds of pounds', want: 55, have: 6,
+      why: 'Diamonds are rare and hard to dig up. Not that many people want one, but there are even fewer to go round.' },
+    { item: 'Strawberries in December', price: 'Pricey', want: 50, have: 20,
+      why: 'Strawberries don\'t grow outdoors in a British winter. They have to be grown in heated greenhouses or flown in from far away. In June there are tonnes of them and they are cheap.' },
+    { item: 'A ticket to the cup final', price: 'Very pricey', want: 100, have: 12,
+      why: 'Millions of fans want to go, but the stadium only has so many seats. When far more people want something than there is, the price shoots up.' },
+    { item: 'Last year\'s video game', price: 'Often on sale', want: 25, have: 90,
+      why: 'Lots of people already bought it, and the shop still has plenty. Fewer people want it now, so the price drops to tempt buyers.' },
+    { item: 'The air you breathe', price: 'Free', want: 100, have: 100,
+      why: 'Everyone needs air, but there is so much of it that nobody can sell it to you. Being needed isn\'t enough to make something expensive.' },
+  ];
+  const tagWrap = document.getElementById('tags');
+  tags.forEach((t, i) => {
+    const b = document.createElement('button');
+    b.className = 'tag-card'; b.type = 'button'; b.id = 'tag-' + i;
+    b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = `<span class="item">${t.item}</span>
+      <span class="ask">Cheap or pricey? Tap to find out.</span>
+      <span class="answer" hidden>
+        <span class="price-tag">${t.price}</span>
+        <span class="meter d"><span>People want it</span><span class="bar"><i style="width:${t.want}%"></i></span></span>
+        <span class="meter s"><span>How much there is</span><span class="bar"><i style="width:${t.have}%"></i></span></span>
+        <span class="why">${t.why}</span>
+      </span>`;
+    b.addEventListener('click', () => {
+      const ans = b.querySelector('.answer'), ask = b.querySelector('.ask');
+      const open = ans.hidden;
+      ans.hidden = !open; ask.hidden = open;
+      b.setAttribute('aria-expanded', String(open));
+    });
+    tagWrap.appendChild(b);
+  });
+
+  /* ---------- Step 1: buyers ---------- */
+  const personSvg = '<svg viewBox="0 0 24 34" aria-hidden="true"><circle cx="12" cy="7" r="6" fill="currentColor"/><path d="M2 33 V22 a10 10 0 0 1 20 0 V33 Z" fill="currentColor"/></svg>';
+  const crowd = document.getElementById('crowd');
+  const maxes = Array.from({ length: 24 }, (_, i) => Math.round(0.125 * (24 - i) * 20) / 20);
+  maxes.forEach((m) => {
+    const d = document.createElement('div');
+    d.className = 'person';
+    d.innerHTML = personSvg + `<span class="max">${fmt(m)}</span>`;
+    crowd.appendChild(d);
+  });
+  const p1 = document.getElementById('p1');
+  function renderBuyers() {
+    const p = +p1.value;
+    document.getElementById('p1v').textContent = fmt(p);
+    let n = 0;
+    [...crowd.children].forEach((el, i) => {
+      const buys = maxes[i] >= p - 1e-9;
+      el.classList.toggle('out', !buys);
+      if (buys) n++;
+    });
+    const people = n * 5;
+    document.getElementById('r1').innerHTML =
+      `At <strong>${fmt(p)}</strong>, <strong class="buyers">${people} people</strong> buy a cup and <strong>${120 - people}</strong> walk on by. ` +
+      (people ? `You'd take <strong>${money(people * p)}</strong>.` : 'Nobody thinks it\'s worth it.');
+  }
+  p1.addEventListener('input', renderBuyers);
+  renderBuyers();
+
+  /* ---------- Step 2: makers ---------- */
+  const stallSvg = '<svg viewBox="0 0 52 40" aria-hidden="true"><path d="M2 4 H50 L46 14 H6 Z" fill="currentColor"/><rect x="8" y="14" width="3" height="16" fill="currentColor"/><rect x="41" y="14" width="3" height="16" fill="currentColor"/><rect x="4" y="28" width="44" height="10" rx="2" fill="currentColor"/></svg>';
+  const stalls = document.getElementById('stalls');
+  const costs = Array.from({ length: 15 }, (_, i) => Math.round((i + 1) * 0.2 * 100) / 100);
+  costs.forEach((c) => {
+    const d = document.createElement('div');
+    d.className = 'stall';
+    d.innerHTML = stallSvg + `<span class="cost">${fmt(c)} a cup</span><span class="state">Closed</span>`;
+    stalls.appendChild(d);
+  });
+  const p2 = document.getElementById('p2');
+  function renderMakers() {
+    const p = +p2.value;
+    document.getElementById('p2v').textContent = fmt(p);
+    let n = 0;
+    [...stalls.children].forEach((el, i) => {
+      const open = costs[i] <= p + 1e-9;
+      el.classList.toggle('open', open);
+      el.querySelector('.state').textContent = open ? 'Open' : 'Closed';
+      if (open) n++;
+    });
+    document.getElementById('r2').innerHTML =
+      `At <strong>${fmt(p)}</strong>, <strong class="makers">${n} stall${n === 1 ? '' : 's'}</strong> open and make <strong class="makers">${n * 10} cups</strong>. ` +
+      (n < 15 ? `The other ${15 - n} would lose money on every cup, so they stay shut.` : 'Every stall can make a profit at this price.');
+  }
+  p2.addEventListener('input', renderMakers);
+  renderMakers();
+
+  /* ---------- Step 3: market chart ---------- */
+  const W = 420, H = 320, ml = 50, mr = 14, mt = 14, mb = 44, QMAX = 200, PMAX = 3;
+  const X = (q) => ml + (q / QMAX) * (W - ml - mr);
+  const Y = (p) => H - mb - (p / PMAX) * (H - mt - mb);
+  const B = 40, D = 50;
+  const weatherA = { normal: 120, heat: 180, rain: 70 };
+  const lemonsC = { normal: -10, short: -50, more: 30 };
+  const notes = {
+    heat: 'Heatwave: far more people want a cold drink at every price, so the buyers line jumps to the right.',
+    rain: 'Rainy day: fewer people want lemonade at any price, so the buyers line moves left.',
+    short: 'Lemon shortage: lemons cost more, so each stall needs a higher price before it\'s worth opening. The makers line moves left.',
+    more: 'New stalls open: there are more makers, so more cups get made at every price. The makers line moves right.',
+  };
+  const p3 = document.getElementById('p3');
+  const chart = document.getElementById('chart');
+  const getA = () => weatherA[document.querySelector('input[name=weather]:checked').value];
+  const getC = () => lemonsC[document.querySelector('input[name=lemons]:checked').value];
+  const qd = (a, p) => Math.max(0, a - B * p);
+  const qs = (c, p) => Math.max(0, c + D * p);
+  const eq = (a, c) => { const p = (a - c) / (B + D); return { p, q: a - B * p }; };
+
+  function linePath(fn) {
+    const pts = [];
+    for (let p = 0; p <= PMAX + 1e-9; p += 0.025) {
+      const q = fn(p);
+      if (q > 0 && q <= QMAX) pts.push(`${X(q).toFixed(1)},${Y(p).toFixed(1)}`);
+    }
+    return pts.length ? 'M' + pts.join(' L') : '';
+  }
+
+  function renderMarket() {
+    const p = +p3.value, a = getA(), c = getC();
+    document.getElementById('p3v').textContent = fmt(p);
+    const dq = qd(a, p), sq = qs(c, p), e = eq(a, c);
+    const changed = a !== weatherA.normal || c !== lemonsC.normal;
+    let s = '';
+    // grid
+    for (let v = 0; v <= PMAX; v += 0.5) {
+      s += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="${v % 1 === 0 ? 1 : 0.5}"/>`;
+      s += `<text x="${ml - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--muted)">${v === 0 ? '0' : fmt(v)}</text>`;
+    }
+    for (let q = 0; q <= QMAX; q += 50) {
+      s += `<text x="${X(q)}" y="${H - mb + 18}" text-anchor="middle" font-size="12" fill="var(--muted)">${q}</text>`;
+    }
+    s += `<text x="${(ml + W - mr) / 2}" y="${H - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">Cups of lemonade</text>`;
+    s += `<text transform="translate(13 ${(mt + H - mb) / 2}) rotate(-90)" text-anchor="middle" font-size="12" font-weight="700" fill="var(--muted)">Price per cup</text>`;
+    // ghost lines for the normal day
+    if (changed) {
+      s += `<path d="${linePath((pp) => qd(weatherA.normal, pp))}" fill="none" stroke="var(--demand)" stroke-width="2" stroke-dasharray="4 5" opacity=".4"/>`;
+      s += `<path d="${linePath((pp) => qs(lemonsC.normal, pp))}" fill="none" stroke="var(--supply)" stroke-width="2" stroke-dasharray="4 5" opacity=".4"/>`;
+    }
+    // gap band at current price
+    const lo = Math.min(dq, sq), hi = Math.max(dq, sq);
+    if (hi - lo > 4) {
+      s += `<rect x="${X(Math.min(lo, QMAX))}" y="${Y(p) - 7}" width="${X(Math.min(hi, QMAX)) - X(Math.min(lo, QMAX))}" height="14" rx="4" fill="${dq > sq ? 'var(--demand)' : 'var(--supply)'}" opacity=".22"/>`;
+    }
+    // price line
+    s += `<line x1="${ml}" x2="${W - mr}" y1="${Y(p)}" y2="${Y(p)}" stroke="var(--lemon)" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+    // curves
+    s += `<path d="${linePath((pp) => qd(a, pp))}" fill="none" stroke="var(--demand)" stroke-width="4" stroke-linecap="round"/>`;
+    s += `<path d="${linePath((pp) => qs(c, pp))}" fill="none" stroke="var(--supply)" stroke-width="4" stroke-linecap="round"/>`;
+    // equilibrium marker (faint target)
+    s += `<circle cx="${X(e.q)}" cy="${Y(e.p)}" r="9" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".55"/>`;
+    // points on curves at current price
+    if (dq > 0 && dq <= QMAX) s += `<circle cx="${X(dq)}" cy="${Y(p)}" r="6" fill="var(--demand)" stroke="var(--surface)" stroke-width="2"/>`;
+    if (sq > 0 && sq <= QMAX) s += `<circle cx="${X(sq)}" cy="${Y(p)}" r="6" fill="var(--supply)" stroke="var(--surface)" stroke-width="2"/>`;
+    chart.innerHTML = s;
+
+    const st = document.getElementById('status');
+    const gap = Math.round(dq - sq), D_ = Math.round(dq), S_ = Math.round(sq);
+    if (Math.abs(gap) <= 4) {
+      st.className = 'status balanced';
+      st.innerHTML = `<b>Balanced!</b>About ${S_} cups are made and about ${D_} people want one. Nothing is wasted and nobody goes home thirsty. This is the <em>market price</em>.`;
+    } else if (gap > 0) {
+      st.className = 'status short';
+      st.innerHTML = `<b>Queue! ${gap} people miss out</b>${D_} people want a cup but only ${S_} get made. Sellers see the queue and realise they could charge more.`;
+    } else {
+      st.className = 'status surplus';
+      st.innerHTML = `<b>${-gap} cups left over</b>${S_} cups are made but only ${D_} people want one. Sellers drop their price so the lemonade doesn't go to waste.`;
+    }
+  }
+
+  let anim = null;
+  function settle() {
+    const target = Math.round(eq(getA(), getC()).p / 0.05) * 0.05;
+    if (anim) cancelAnimationFrame(anim);
+    if (reduce) { p3.value = target; renderMarket(); return; }
+    const start = +p3.value, t0 = performance.now(), dur = 1400;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur), ease = 1 - Math.pow(1 - k, 3);
+      p3.value = start + (target - start) * ease;
+      renderMarket();
+      if (k < 1) anim = requestAnimationFrame(step); else { p3.value = target; renderMarket(); anim = null; }
+    };
+    anim = requestAnimationFrame(step);
+  }
+  p3.addEventListener('input', () => { if (anim) { cancelAnimationFrame(anim); anim = null; } renderMarket(); });
+  document.getElementById('settle').addEventListener('click', settle);
+  document.querySelectorAll('input[name=weather], input[name=lemons]').forEach((r) => r.addEventListener('change', () => {
+    const w = document.querySelector('input[name=weather]:checked').value;
+    const l = document.querySelector('input[name=lemons]:checked').value;
+    const parts = [];
+    if (w !== 'normal') parts.push(notes[w]);
+    if (l !== 'normal') parts.push(notes[l]);
+    document.getElementById('change-note').textContent = parts.length
+      ? parts.join(' ') + ' The faint dashed lines show a normal day.'
+      : 'A normal day. Try a heatwave or a lemon shortage, then press “Let the market settle”.';
+    renderMarket();
+  }));
+  renderMarket();
+
+  /* ---------- Step 4: the game ---------- */
+  const weatherBase = { hot: 170, sunny: 120, cloudy: 85, rainy: 45 };
+  const weatherLabel = { hot: 'Scorching hot', sunny: 'Sunny', cloudy: 'Cloudy', rainy: 'Rainy' };
+  const week = [
+    { name: 'Monday', w: 'sunny', cost: 0.40, news: 'A normal sunny day. Lemons cost the usual amount.' },
+    { name: 'Tuesday', w: 'cloudy', cost: 0.40, news: 'Grey and chilly. Fewer people feel like a cold drink.' },
+    { name: 'Wednesday', w: 'hot', cost: 0.40, news: 'Heatwave! Everyone in town is thirsty.' },
+    { name: 'Thursday', w: 'hot', cost: 0.80, news: 'Still boiling. Every stall has been buying lemons, so the shop has run low and doubled the price.' },
+    { name: 'Friday', w: 'rainy', cost: 0.40, news: 'Pouring with rain all day.' },
+    { name: 'Saturday', w: 'sunny', cost: 0.25, news: 'Sunny, and the shop has too many lemons, so they\'re on offer.' },
+    { name: 'Sunday', w: 'hot', cost: 0.40, rival: 1.20, news: 'Hot again! But a new stall has opened across the road, selling cups for £1.20.' },
+  ];
+  const START = 20;
+  let g;
+  const game = document.getElementById('game');
+
+  function newGame() { g = { day: 0, money: START, history: [], phase: 'plan', cups: 40, price: 1.5, last: null }; renderGame(); }
+
+  function maxCups() { const d = week[g.day]; return Math.min(150, Math.floor((g.money + 1e-9) / d.cost)); }
+
+  function historyTable() {
+    if (!g.history.length) return '';
+    const rows = g.history.map((h) => `<tr><td>${h.day}</td><td>${weatherLabel[h.w]}</td><td>${fmt(h.price)}</td><td>${h.made}</td><td>${h.sold}</td><td class="${h.profit >= 0 ? 'pos' : 'neg'}">${money(h.profit)}</td></tr>`).join('');
+    return `<div class="table-wrap"><table><thead><tr><th>Day</th><th>Weather</th><th>Price</th><th>Made</th><th>Sold</th><th>Profit</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  function renderGame() {
+    if (g.phase === 'done') return renderSummary();
+    const d = week[g.day];
+    const mc = maxCups();
+    g.cups = Math.min(g.cups, mc);
+    let html = `<div class="game-head">
+        <div><div class="eyebrow">Day ${g.day + 1} of 7</div><div class="day-name">${d.name}</div></div>
+        <div class="wallet"><div class="cap">In your tin</div><div class="amt">${money(g.money)}</div></div>
+      </div>
+      <div class="forecast"><span class="pill ${d.w}">${weatherLabel[d.w]}</span><span class="pill">Lemons: ${fmt(d.cost)} a cup</span>${d.rival ? '<span class="pill hot">Rival stall: £1.20</span>' : ''}</div>
+      <p>${d.news}</p>`;
+
+    if (g.phase === 'plan') {
+      html += `<div class="game-grid">
+          <div class="control">
+            <div class="control-row"><label for="g-cups">Cups to make</label><span class="big-price" id="g-cups-v">${g.cups}</span></div>
+            <input type="range" id="g-cups" min="0" max="${mc}" step="1" value="${g.cups}" ${mc === 0 ? 'disabled' : ''}>
+            <span class="change-note" id="g-spend"></span>
+          </div>
+          <div class="control">
+            <div class="control-row"><label for="g-price">Price per cup</label><span class="big-price" id="g-price-v">${fmt(g.price)}</span></div>
+            <input type="range" id="g-price" min="0.2" max="3" step="0.05" value="${g.price}">
+            <span class="change-note">Higher price: more money per cup, fewer buyers.</span>
+          </div>
+        </div>
+        <button class="btn lemon" id="g-open" type="button">${mc === 0 ? 'Skip the day' : 'Open the stall'}</button>`;
+      if (mc === 0) html += `<p class="note">You don't have enough money to buy lemons today. That happens to real businesses too.</p>`;
+    } else {
+      const r = g.last;
+      html += `<div class="result" aria-live="polite">
+          <div class="result-stats">
+            <div class="stat"><div class="n">${r.customers}</div><div class="k">people wanted a cup</div></div>
+            <div class="stat"><div class="n">${r.sold}</div><div class="k">cups sold</div></div>
+            <div class="stat"><div class="n">${r.leftover}</div><div class="k">cups left over</div></div>
+            <div class="stat"><div class="n ${r.profit >= 0 ? 'pos' : 'neg'}">${money(r.profit)}</div><div class="k">profit today</div></div>
+          </div>
+          <p>${r.msg}</p>
+        </div>
+        <button class="btn" id="g-next" type="button">${g.day === 6 ? 'See how your week went' : 'On to ' + week[g.day + 1].name}</button>`;
+    }
+    html += historyTable();
+    game.innerHTML = html;
+
+    if (g.phase === 'plan') {
+      const cupsEl = document.getElementById('g-cups'), priceEl = document.getElementById('g-price');
+      const upd = () => {
+        g.cups = +cupsEl.value; g.price = +priceEl.value;
+        document.getElementById('g-cups-v').textContent = g.cups;
+        document.getElementById('g-price-v').textContent = fmt(g.price);
+        document.getElementById('g-spend').textContent = `Costs ${money(g.cups * d.cost)} in lemons. If you sold them all you'd take ${money(g.cups * g.price)}.`;
+      };
+      cupsEl.addEventListener('input', upd); priceEl.addEventListener('input', upd); upd();
+      document.getElementById('g-open').addEventListener('click', playDay);
+    } else {
+      document.getElementById('g-next').addEventListener('click', () => {
+        if (g.day === 6) g.phase = 'done'; else { g.day++; g.phase = 'plan'; }
+        renderGame();
+      });
+    }
+  }
+
+  function playDay() {
+    const d = week[g.day], P = g.price, made = g.cups;
+    let want = Math.max(0, weatherBase[d.w] - B * P);
+    if (d.rival && P > d.rival + 1e-9) want *= 0.25;
+    want = Math.round(want * (0.92 + Math.random() * 0.16));
+    const sold = Math.min(made, want), leftover = made - sold, missed = want - sold;
+    const spend = made * d.cost, takings = sold * P, profit = takings - spend;
+    g.money += profit;
+
+    const bits = [];
+    if (made === 0) bits.push('You kept the stall shut today.');
+    else if (missed > 0) bits.push(`You sold out! <b>${missed} more people</b> wanted a cup. With a queue like that you could have charged more, or made more cups.`);
+    else if (leftover > 0 && leftover >= made * 0.25) bits.push(`<b>${leftover} cups</b> went warm and were thrown away. That's ${money(leftover * d.cost)} of lemons wasted. A lower price would have tempted more buyers, or you could have made fewer.`);
+    else if (leftover > 0) bits.push(`Only ${leftover} cup${leftover === 1 ? '' : 's'} left over. Nicely judged.`);
+    else bits.push('You sold every cup with nobody left waiting. Spot on!');
+    if (d.rival && P > d.rival + 1e-9 && made > 0) bits.push('Most people went to the rival stall because it was cheaper. That\'s competition.');
+    if (d.rival && P <= d.rival + 1e-9 && made > 0) bits.push('By matching the rival on price, you kept your customers.');
+    if (d.cost > 0.5 && made > 0) bits.push('Lemons were expensive today, so each cup had to sell for more just to break even.');
+    if (made > 0) bits.push(`You spent ${money(spend)} on lemons and took ${money(takings)}.`);
+
+    g.last = { customers: want, sold, leftover, profit, msg: bits.join(' ') };
+    g.history.push({ day: d.name.slice(0, 3), w: d.w, price: P, made, sold, profit });
+    g.phase = 'result';
+    renderGame();
+  }
+
+  function renderSummary() {
+    const total = g.money - START;
+    let verdict;
+    if (total >= 150) verdict = 'Lemonade tycoon! You read the weather, watched your costs and priced like a pro.';
+    else if (total >= 80) verdict = 'A really good week. You made a solid profit.';
+    else if (total > 0) verdict = 'You made a profit, well done. Can you beat it by matching your price and cups to the weather?';
+    else verdict = 'You lost money this week. That happens to lots of real businesses. Try again and watch the weather and the lemon price.';
+    game.innerHTML = `<div class="game-head">
+        <div><div class="eyebrow">End of the week</div><div class="day-name">${total >= 0 ? 'You made ' + money(total) : 'You lost ' + money(-total)}</div></div>
+        <div class="wallet"><div class="cap">In your tin</div><div class="amt">${money(g.money)}</div></div>
+      </div>
+      <p>${verdict}</p>
+      <p class="note"><b>Did you notice?</b> On hot days you could charge more and still sell out. On rainy days you had to drop the price or make fewer cups. That's supply and demand working on you.</p>
+      ${historyTable()}
+      <button class="btn lemon" id="g-again" type="button">Play another week</button>`;
+    document.getElementById('g-again').addEventListener('click', newGame);
+  }
+
+  newGame();
+})();
+</script>
